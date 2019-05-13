@@ -7,12 +7,16 @@ const char* ssid = SCHOOL_SSID;
 const char* password = SCHOOL_PASSWORD;
 */
 
-const char* ssid = "";
-const char* password = "";
-
+int red = 4;
+//int blue = 5;
+//int green = 2;
 
 void setup() 
 {
+  pinMode(red, OUTPUT);
+  //pinMode(blue, OUTPUT);
+  //pinMode(green, OUTPUT);
+  
   Serial.begin(115200);
   delay(100);
  
@@ -36,12 +40,24 @@ void setup()
 
 void loop() 
 {
+  /*digitalWrite(green, LOW);
+  delay(10);
+  digitalWrite(red, LOW);
+  digitalWrite(blue, HIGH);
+  delay(10);
+  digitalWrite(green, HIGH);
+  digitalWrite(blue, LOW);*/
+  
+  digitalWrite(red, HIGH);
+  delay(1000);
+  digitalWrite(red, HIGH);
+  
   if (WiFi.status() == WL_CONNECTED) 
   {
 	HTTPClient http; //Object of class HTTPClient
 	http.begin("http://api.openweathermap.org/data/2.5/weather?q=London,uk&appid=49f088e9926973eae06381752434ac70&mode=json&units=metric"); //Specify the URL and certificate.
 	int httpCode = http.GET();
-	Serial.print("Searching for API.");
+	Serial.println("Searching for API.");
 
 	/*
 	  < 0 there is a connection error
@@ -56,20 +72,22 @@ void loop()
 	  // FIND FIELDS IN JSON TREE
 	  JsonObject& root = jsonBuffer.parseObject(jsonString);
 	  JsonObject& main = root["main"];
+    JsonObject& weather = root["weather"][0];
 	  if (!root.success()) {
 		Serial.println("parseObject() failed");
 		return;
 	  }
 
+    //Getting and displaying the temmperature
 	  float temp = main["temp"];
+    Serial.print("The temperature is: ");
 	  Serial.println(temp);
 
-
-	  //const char* mainTemperature = parsed["main"];
-	  //const char* currentTemperature = mainTemperature["temp"];
-
-	  //Serial.println(mainTemperature);
-	  //Serial.println(currentTemperature);
+    //Getting and displaying the weather description
+    String desc = weather["main"];
+    Serial.print("The weather description is: ");
+    Serial.println(desc);
+    
 	}
 	else{
 	  Serial.print("Error in HTTP request");
