@@ -4,20 +4,33 @@
 
 #define DELAY 1000
 
-/*
-const char* ssid = SCHOOL_SSID;
-const char* password = SCHOOL_PASSWORD;
-*/
+const char* ssid = "";
+const char* password = "";
 
-const int bluePin = 12;
+const int bluePin = 13;
 const int redPin = 15;
-const int greenPin = 13;
+const int greenPin = 12;
+
+//Huidige location
+const String LOCATION = "Mechelen,be";
+
+//Dummy data
+//const String LOCATION = "Budapest,hu";
+//const String LOCATION = "Tete,mz";
+//const String LOCATION = "Bolzano,it";
+
+//Vaste URL
+const String URL = "http://api.openweathermap.org/data/2.5/weather?q=";
+const String API_KEY_QUERY = "&appid=49f088e9926973eae06381752434ac70";
+const String OPTIONS = "&mode=json&units=metric";
+
+const String FULL_URL = URL + LOCATION + API_KEY_QUERY + OPTIONS;
 
 void setup() 
 {
-   pinMode(redPin,OUTPUT);
- pinMode(greenPin,OUTPUT);
- pinMode(bluePin,OUTPUT);
+  pinMode(redPin,OUTPUT);
+  pinMode(greenPin,OUTPUT);
+  pinMode(bluePin,OUTPUT);
   Serial.begin(115200);
   delay(100);
  
@@ -41,28 +54,10 @@ void setup()
 
 void loop() 
 {
-    digitalWrite(redPin, HIGH); //rood
-  delay(DELAY);
-    digitalWrite(greenPin, HIGH); //geel
-    delay(DELAY);
-    digitalWrite(redPin, LOW); //groen
-    delay(DELAY);
-    digitalWrite(bluePin, HIGH); //cyaan
-    delay(DELAY);
-    digitalWrite(greenPin, LOW); //blauw
-    delay(DELAY);
-    digitalWrite(redPin, HIGH); //magenta
-    delay(DELAY);
-    digitalWrite(greenPin, HIGH); //wit
-    delay(DELAY);
-    /*Alle lampen uit voor de volgende loop.*/
-    digitalWrite(greenPin, LOW); //groen uit
-    digitalWrite(redPin, LOW); //rood uit
-    digitalWrite(bluePin, LOW); //blauw uit
   if (WiFi.status() == WL_CONNECTED) 
   {
     HTTPClient http; //Object of class HTTPClient
-    http.begin("http://api.openweathermap.org/data/2.5/weather?q=London,uk&appid=49f088e9926973eae06381752434ac70&mode=json&units=metric"); //Specify the URL and certificate.
+    http.begin(FULL_URL); //Specify the URL and certificate.
     int httpCode = http.GET();
     Serial.print("Searching for API.");
 
@@ -79,20 +74,20 @@ void loop()
       // FIND FIELDS IN JSON TREE
       JsonObject& root = jsonBuffer.parseObject(jsonString);
       JsonObject& main = root["main"];
+      JsonObject& weather = root["weather"][0];
       if (!root.success()) {
         Serial.println("parseObject() failed");
         return;
       }
 
+      //Getting and displaying the temperature
       float temp = main["temp"];
+      Serial.print("The temperature is: ");
       Serial.println(temp);
 
-
-      //const char* mainTemperature = parsed["main"];
-      //const char* currentTemperature = mainTemperature["temp"];
-
-      //Serial.println(mainTemperature);
-      //Serial.println(currentTemperature);
+      //Getting and displaying the weather description
+      String desc = weather["main"];
+      displayDescription(desc);
     }
     else{
       Serial.print("Error in HTTP request");
@@ -102,3 +97,67 @@ void loop()
   /*A new request is send every 60000 milliseconds.*/
   delay(60000);
 }
+
+void displayDescription(String weather){
+  //API description gives a Capitalized string back.
+  weather.toLowerCase();
+  if(weather.equals("rain")){
+    //blauw
+    setColor(0, 0, 255);
+    Serial.println("The led displays blue which means the weather is: ");
+    Serial.print(weather);
+  }
+  else if(weather.equals("cloudy") || weather.equals("clouds")){
+    //paars
+    setColor(80, 0, 80);
+    Serial.println("The led displays purple which means the weather is: ");
+    Serial.print(weather);
+  }
+  else if(weather.equals("snow")){
+    //aqua
+    setColor(0, 255, 255);
+    Serial.println("The led displays aqua which means the weather is: ");
+    Serial.print(weather);
+  }
+  else if(weather.equals("hail")){
+    //rood
+    setColor(255, 0, 0);
+    Serial.println("The led displays red which means the weather is: ");
+    Serial.print(weather);
+  }
+  else if(weather.equals("clear")){
+    //geel
+    setColor(255, 255, 0);
+    Serial.println("The led displays yellow which means the weather is: ");
+    Serial.print(weather);
+  }
+  //Atmosphere
+  else if(weather.equals("mist") || weather.equals("smoke") || weather.equals("haze") ||
+  weather.equals("dust") || weather.equals("fog") || weather.equals("sand") || weather.equals("ash") ||
+  weather.equals("squall") || weather.equals("tornado")){
+    //orange
+     setColor(255, 255, 255),
+     Serial.println("The led displays orange which means the weather is: ");
+     Serial.print(weather);
+  }
+  //Drizzle & thunderstorm
+  else{
+    //wit
+    setColor(255, 255, 255),
+    Serial.println("The led displays white which means the weather is: ");
+    Serial.print(weather);
+  }
+}
+
+void setColor(int red, int green, int blue)
+{
+  #ifdef COMMON_ANODE
+    red = 255 - red;
+    green = 255 - green;
+    blue = 255 - blue;
+  #endif
+  analogWrite(redPin, red);
+  analogWrite(greenPin, green);
+  analogWrite(bluePin, blue);  
+}
+
